@@ -1,0 +1,8 @@
+.error {
+	text-align: center;
+	background-color: tomato;
+	font-size: 1.5rem;
+	width: 40%;
+	border: 1px solid tomato;
+	border-radius: 5px;
+}
