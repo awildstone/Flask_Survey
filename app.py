@@ -54,11 +54,17 @@ def display_question(num):
 @app.route('/answer', methods=['POST'])
 def save_answer():
     '''Get survey responses for the user and save the response to responses[].
+    Handle responses from the form if there is more than one response to parse
+    and save the responses to the response list in memory.
     If the survey has more questions, show the next question, otherwise
     thank the user for taking the survey. '''
+
     if (len(request.form) == 2):
         answer = request.form['answer']
-        reason = request.form['reason']
+        reason = 'reason'
+        for r in request.form.getlist('reason'):
+            if r != '':
+                reason = r
         responses.append({'answer': answer, 'reason': reason})
     else:
         answer = request.form['answer']

@@ -8,7 +8,11 @@
 <p>Thank you for completing this survey.</p>
 <ul>
 {% for i in range(0, length) %}
-    <li><b>{{ questions[i].question }}</b>  {{responses[i]}}</li>
+    {% if responses[i] is not string %}
+        <li><b>{{ questions[i].question }}</b>  {{ responses[i].get('answer') }} - {{ responses[i].get('reason') }}</li>
+    {% else %}
+        <li><b>{{ questions[i].question }}</b>  {{responses[i]}}</li>
+    {% endif %}
 {% endfor %}
 </ul>
 {% endblock %}

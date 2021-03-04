@@ -13,7 +13,7 @@
     <p><input type="radio" name="answer" value="{{ choice }}">
         <label for="{{ choice }}">{{ choice }}</label></p>
         {% if allow_text %}
-        <p>Reason: <input type="text" name="reason"></p>
+        <p>Reason: <input type="text" name="reason" placeholder="add reason"></p>
         {% endif %}
     {% endfor %}
     <button>Next</button>
