@@ -1,8 +1,43 @@
+h1,
+h2 {
+	font-family: 'Montserrat', sans-serif;
+	text-align: center;
+}
+
+body {
+	font-family: 'Raleway', sans-serif;
+	font-size: 18px;
+}
+
+.container {
+	width: 60%;
+	margin: auto;
+	padding: 20px;
+	border: 1px solid black;
+	border-radius: 10px;
+}
+
 .error {
 	text-align: center;
+	margin: 20px auto 20px auto;
 	background-color: tomato;
 	font-size: 1.5rem;
 	width: 40%;
 	border: 1px solid tomato;
 	border-radius: 5px;
+}
+
+button {
+	font-family: 'Raleway', sans-serif;
+	font-size: 1rem;
+	color: white;
+	background-color: royalblue;
+	border: 1px royalblue solid;
+	border-radius: 5px;
+}
+
+button:hover {
+	cursor: pointer;
+	background-color: skyblue;
+	color: blue;
 }
