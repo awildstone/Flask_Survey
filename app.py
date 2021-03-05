@@ -1,53 +1,65 @@
-from flask import Flask, request, render_template, redirect, flash, jsonify
+from flask import Flask, session, request, render_template, redirect, make_response, flash
 from flask_debugtoolbar import DebugToolbarExtension
-from surveys import *
+from surveys import surveys
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "my_secret_key"
-debug = DebugToolbarExtension(app)
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+debug = DebugToolbarExtension(app)
 
-# hold responses from our survey
-responses = []
-# hold the survey type and questions length selected by the user
-survey_selection = {}
+#save the key names for responses and survey so the names are constant
+RESPONSES_KEY = 'responses'
+SURVEY_KEY = 'survey_type'
 
 @app.route('/')
 def select_survey():
-    return render_template('choose_survey.html')
+    ''' Display a form for the user to select a survey type. '''
+    return render_template('choose_survey.html', surveys=surveys)
 
-# @app.route('/')
-@app.route('/home', methods=['POST'])
-def survey_home():
-    '''Get survey type and display survey instructions to user.'''
-    selection = request.form['survey']
-    survey_obj = surveys.get(f'{selection}')
+@app.route('/', methods=['POST'])
+def start_survey():
+    ''' Get the survey selection and display the survey instructions to the user. '''
 
-    #save the survey selection
-    survey_selection['type'] = survey_obj
-    survey_selection['name'] = selection
-    survey_selection['num_questions'] = len(survey_obj.questions)
-    
-    survey_title = survey_obj.title
-    survey_instructions = survey_obj.instructions
-    return render_template('home.html', title=survey_title, instructions=survey_instructions)
+    #get the survey selection
+    selection = request.form['survey_name']
+
+    #get the survey object so we can pass to the start page
+    survey = surveys[selection]
+
+    #save the survey type to the current session, also overrides any past selection
+    session[SURVEY_KEY] = selection
+
+    return render_template('start.html', survey=survey)
+
+@app.route('/start_survey', methods=['POST'])
+def save_session():
+    ''' Clear past responses data from the session before beginning this new survey. '''
+
+    #set sessions to an empty list
+    session[RESPONSES_KEY] = []
+
+    return redirect('/questions/1')
+
 
 @app.route('/questions/<int:num>')
 def display_question(num):
-    '''Get survey questions and display question and choices to user. '''
+    '''Get survey question number and display question and choices to user. '''
+
+    #get the current responses
+    responses = session.get(RESPONSES_KEY)
+
+    survey = get_current_survey()
+
     if (num - 1 == len(responses)):
-        # get the survey type
-        survey_obj = survey_selection.get('type')
-        title = survey_obj.title
-        # get question data
-        question_obj = survey_obj.questions[num - 1]
-        question = question_obj.question
-        choices = question_obj.choices
-        allow_text = question_obj.allow_text
-        return render_template('question.html', title=title, question_num=num, question=question, choices=choices, allow_text=allow_text)
-    elif (len(responses) == survey_selection.get('num_questions')):
+        #the current page num matches the number of responses we have!
+        #get the question data and show the question to the user
+        question = survey.questions[num - 1]
+        return render_template('question.html', question_num=num, question=question)
+    elif (len(responses) == len(survey.questions)):
+        #all questions are answered
         return redirect('/thanks')
     else:
+        #they are trying to cheat!
         flash('Stop trying to change the survey question order!', 'error')
         return redirect(f'/questions/{len(responses) + 1}')
 
@@ -59,29 +71,41 @@ def save_answer():
     If the survey has more questions, show the next question, otherwise
     thank the user for taking the survey. '''
 
-    if (len(request.form) == 2):
-        answer = request.form['answer']
-        reason = 'reason'
-        for r in request.form.getlist('reason'):
-            if r != '':
-                reason = r
-        responses.append({'answer': answer, 'reason': reason})
-    else:
-        answer = request.form['answer']
-        responses.append(answer)
+    #get answer and reason (if reason doesn't exist save an empty string)
+    answer = request.form['answer']
+    reason = request.form.get('reason', '')
 
-    if (len(responses) == survey_selection.get('num_questions')):
+    #point responses to the session response list to access it and add this response to the list
+    responses = session[RESPONSES_KEY]
+    responses.append({'answer': answer, 'reason': reason})
+    #rebind session
+    session[RESPONSES_KEY] = responses
+
+    survey = get_current_survey()
+
+    if (len(responses) == len(survey.questions)):
+        #the survey is complete
         return redirect('/thanks')
-    else: 
+    else:
+        #there are more questions to go - show the next question to the user
         return redirect(f'/questions/{len(responses) + 1}')
 
 @app.route('/thanks')
 def say_thanks():
     '''Thank user for completing the survey.'''
 
-    survey_obj = survey_selection.get('type')
-    questions = survey_obj.questions
-    q_res = responses
-    length = survey_selection.get('num_questions')
+    #get end of survey data
+    survey = get_current_survey()
+    responses = session[RESPONSES_KEY]
+    survey_length = len(survey.questions)
 
-    return render_template('thanks.html', questions=questions, responses=q_res, length=length)
+    return render_template('thanks.html', survey=survey, responses=responses, len=survey_length)
+
+def get_current_survey():
+    ''' Gets the survey type from the current session, then gets survey object
+    from surveys and returns it. '''
+    #get the current survey selection and survey object for that type
+    survey_type = session.get(SURVEY_KEY)
+    survey = surveys[survey_type]
+
+    return survey

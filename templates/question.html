@@ -1,21 +1,21 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}Question {{ question_num }}{% endblock %}
 
-{% block h1 %}{{ title }}{% endblock %}
+{% block h1 %}Question {{ question_num }}{% endblock %}
 
 {% block content %}
 
-<h2>{{ question_num }}: {{ question }}</h2>
+<h2>{{ question_num }}: {{ question.question }}</h2>
 
 <form action="/answer" method="POST" name="answer_question">
-    {% for choice in choices %}
+    {% for choice in question.choices %}
     <p><input type="radio" name="answer" value="{{ choice }}">
         <label for="{{ choice }}">{{ choice }}</label></p>
-        {% if allow_text %}
-        <p>Reason: <input type="text" name="reason" placeholder="add reason"></p>
-        {% endif %}
     {% endfor %}
+    {% if question.allow_text %}
+        <p>Reason: <input type="text" name="reason" placeholder="add reason"></p>
+    {% endif %}
     <button>Next</button>
 </form>
 

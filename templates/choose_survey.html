@@ -5,11 +5,12 @@
 {% block h1 %}Choose your Survey{% endblock %}
 
 {% block content %}
-    <form action="/home" method="POST" name="survey">
-        <label for="survey">Choose a survey to get started:</label>
-                <select name="survey">
-                <option value="satisfaction">Satisfaction</option>
-                <option value="personality">Personality</option>
+    <form action="/" method="POST" name="survey_name">
+        <label for="survey">Choose your survey to get started:</label>
+                <select name="survey_name">
+                {% for name, type in surveys.items() %}
+                <option value="{{ name }}">{{ type.title }}</option>
+                {% endfor %}
             </select>
         <p><button>Submit</button></p>
     </form>
