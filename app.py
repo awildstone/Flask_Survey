@@ -23,6 +23,11 @@ def start_survey():
     #get the survey selection
     selection = request.form['survey_name']
 
+    #if the user has already taken the survey, tell them to pick a different survey
+    if request.cookies.get(f'completed_{selection}'):
+        flash(f'You already took the {selection} survey. Pick a different survey.', 'error')
+        return redirect('/');
+
     #get the survey object so we can pass to the start page
     survey = surveys[selection]
 
@@ -99,11 +104,16 @@ def say_thanks():
     responses = session[RESPONSES_KEY]
     survey_length = len(survey.questions)
 
-    return render_template('thanks.html', survey=survey, responses=responses, len=survey_length)
+    html = render_template('thanks.html', survey=survey, responses=responses, len=survey_length)
+    response = make_response(html)
+    response.set_cookie(f'completed_{session[SURVEY_KEY]}', f'{session[SURVEY_KEY]}')
+
+    return response
 
 def get_current_survey():
-    ''' Gets the survey type from the current session, then gets survey object
+    ''' Gets the survey type from the current session, then gets respective survey object
     from surveys and returns it. '''
+
     #get the current survey selection and survey object for that type
     survey_type = session.get(SURVEY_KEY)
     survey = surveys[survey_type]
